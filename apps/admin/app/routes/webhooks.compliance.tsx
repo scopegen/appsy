@@ -1,14 +1,15 @@
 import type { ActionFunctionArgs } from "react-router";
-import { authenticate } from "../shopify.server";
 import db from "../db.server";
 import { customerErased } from "../models/account-deletion.server";
 import { deletePublicFiles } from "../models/storage.server";
 import { deleteStoreKeys } from "../models/vault.server";
+import { authenticateWebhook } from "../webhooks.server";
 
 // Shopify's mandatory privacy webhooks (docs/05-security-and-compliance.md, section 4).
-// authenticate.webhook answers requests with an invalid HMAC with 401, as Shopify requires.
+// Requests with an invalid HMAC are answered with 401, as Shopify requires; shop/redact also
+// works once the store's token can no longer be renewed (webhooks.server.ts).
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const { shop, topic, payload } = await authenticate.webhook(request);
+  const { shop, topic, payload } = await authenticateWebhook(request);
 
   console.log(`Received ${topic} webhook for ${shop}`);
 
